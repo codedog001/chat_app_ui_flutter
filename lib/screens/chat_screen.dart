@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:st_chat_ui/helpers/show_image.dart';
 import '../models/message_model.dart';
 import '../models/user_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
-import 'package:chewie/chewie.dart';
-import 'package:video_player/video_player.dart';
+
+import '../helpers/play_video.dart';
 
 class ChatScreen extends StatefulWidget {
   final User user;
@@ -20,7 +20,6 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   File videoFile;
   File imageFile;
-  VideoPlayerController _videoPlayerController;
 
   TextEditingController _controller = new TextEditingController();
   final picker = ImagePicker();
@@ -53,7 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   _pickImg() async {
-    final pickedFile = await picker.getImage(source: ImageSource.camera);
+    final pickedFile = await picker.getImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         imageFile = File(pickedFile.path);
@@ -200,108 +199,113 @@ class _ChatScreenState extends State<ChatScreen> {
 
   _sendMessageArea() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8),
-      height: 70,
-      color: Colors.white,
-      child: Row(
-        children: <Widget>[
-          IconButton(
-            icon: Icon(Icons.video_call),
-            iconSize: 25,
-            color: Theme.of(context).primaryColor,
-            onPressed: _takeVid,
-          ),
-          IconButton(
-            icon: Icon(Icons.video_collection),
-            iconSize: 25,
-            color: Theme.of(context).primaryColor,
-            onPressed: _pickVid,
-          ),
-          IconButton(
-            icon: Icon(Icons.camera),
-            iconSize: 25,
-            color: Theme.of(context).primaryColor,
-            onPressed: _clickImg,
-          ),
-          IconButton(
-            icon: Icon(Icons.image),
-            iconSize: 25,
-            color: Theme.of(context).primaryColor,
-            onPressed: _pickImg,
-          ),
-          IconButton(
-            icon: Icon(Icons.attachment),
-            iconSize: 25,
-            color: Theme.of(context).primaryColor,
-            onPressed: () {},
-          ),
-          Expanded(
-            child: TextField(
-              decoration: InputDecoration.collapsed(
-                hintText: 'Send a message..',
-              ),
-              textCapitalization: TextCapitalization.sentences,
+        padding: EdgeInsets.symmetric(horizontal: 8),
+        height: 70,
+        color: Colors.white,
+        child: Row(
+          children: <Widget>[
+            IconButton(
+              icon: Icon(Icons.attach_file),
+              iconSize: 25,
+              color: Theme.of(context).primaryColor,
+              onPressed: () {
+                showModalBottomSheet(
+                    elevation: 20,
+                    context: context,
+                    builder: (context) => Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.image),
+                              iconSize: 25,
+                              color: Theme.of(context).primaryColor,
+                              onPressed: _pickImg,
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.camera),
+                              iconSize: 25,
+                              color: Theme.of(context).primaryColor,
+                              onPressed: _clickImg,
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.video_collection),
+                              iconSize: 25,
+                              color: Theme.of(context).primaryColor,
+                              onPressed: _pickVid,
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.video_call),
+                              iconSize: 25,
+                              color: Theme.of(context).primaryColor,
+                              onPressed: _takeVid,
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.attachment),
+                              iconSize: 25,
+                              color: Theme.of(context).primaryColor,
+                              onPressed: () {},
+                            ),
+                          ],
+                        ));
+              },
             ),
-          ),
-          IconButton(
-            icon: Icon(Icons.send),
-            iconSize: 25,
-            color: Theme.of(context).primaryColor,
-            onPressed: () {},
-          ),
-        ],
-      ),
-    );
+            Expanded(
+              child: TextField(
+                decoration: InputDecoration.collapsed(
+                  hintText: 'Send a message..',
+                ),
+                textCapitalization: TextCapitalization.sentences,
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.send),
+              iconSize: 25,
+              color: Theme.of(context).primaryColor,
+              onPressed: () {},
+            ),
+          ],
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
     int prevUserId;
     return Scaffold(
-        backgroundColor: Color(0xFFF6F6F6),
-        appBar: AppBar(
-          title: Text('Chat Room'),
-          brightness: Brightness.dark,
-          centerTitle: true,
-          leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios),
-              color: Colors.white,
-              onPressed: () {
-                Navigator.pop(context);
-              }),
-        ),
-        body: Column(
-          children: <Widget>[
-            videoFile == null
-                ? Expanded(
-                    child: ListView.builder(
-                      reverse: true,
-                      padding: EdgeInsets.all(20),
-                      itemCount: messages.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final Message message = messages[index];
-                        final bool isMe = message.sender.id == currentUser.id;
-                        final bool isSameUser = prevUserId == message.sender.id;
-                        prevUserId = message.sender.id;
-                        return _chatBubble(message, isMe, isSameUser);
-                      },
-                    ),
-                  )
-                : Expanded(
-                    child: mounted
-                        ? Chewie(
-                            controller: ChewieController(
-                              videoPlayerController:
-                                  VideoPlayerController.file(videoFile),
-                              autoPlay: true,
-                              allowPlaybackSpeedChanging: true,
-                              looping: true,
-                            ),
-                          )
-                        : Container(),
+      backgroundColor: Color(0xFFF6F6F6),
+      appBar: AppBar(
+        title: Text('Chat Room'),
+        brightness: Brightness.dark,
+        centerTitle: true,
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios),
+            color: Colors.white,
+            onPressed: () {
+              Navigator.pop(context);
+            }),
+      ),
+      body: videoFile == null && imageFile == null
+          ? Column(
+              children: <Widget>[
+                Expanded(
+                  child: ListView.builder(
+                    reverse: true,
+                    padding: EdgeInsets.all(20),
+                    itemCount: messages.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final Message message = messages[index];
+                      final bool isMe = message.sender.id == currentUser.id;
+                      final bool isSameUser = prevUserId == message.sender.id;
+                      prevUserId = message.sender.id;
+                      return _chatBubble(message, isMe, isSameUser);
+                    },
                   ),
-            _sendMessageArea(),
-          ],
-        ));
+                ),
+                _sendMessageArea(),
+              ],
+            )
+          : imageFile == null
+              ? PlayVideo(videoFile)
+              : ShowImage(imageFile),
+    );
   }
 }
