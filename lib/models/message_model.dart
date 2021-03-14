@@ -19,7 +19,7 @@ List<Message> chats = [
   Message(
     sender: teacher,
     time: '5:30 PM',
-    text: 'Hey dude! Even dead I\'m the hero. Love you 3000 guys.',
+    text: 'Hello There!',
     unread: true,
   ),
   Message(
